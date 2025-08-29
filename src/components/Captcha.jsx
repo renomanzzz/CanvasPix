@@ -184,6 +184,29 @@ const Captcha = ({
           ({t`Tip: Not case-sensitive; I and l are the same`})
         </span>
       </p>
+      
+      {/* Turkish player reminder */}
+      {(() => {
+        // Check if user is from Turkey using Cloudflare IP country header
+        const isTurkishPlayer = window.ssv?.country === 'tr';
+        
+        if (isTurkishPlayer) {
+          return (
+            <div style={{
+              backgroundColor: '#fff3cd',
+              border: '1px solid #ffeaa7',
+              borderRadius: '4px',
+              padding: '10px',
+              margin: '10px 0',
+              color: '#856404'
+            }}>
+              <strong>🇹🇷 Türk Oyuncu Hatırlatması:</strong> Her 10 dakikada bir hamamböceği ile jumpscare olmayı kabul ediyorsunuz! 🪳
+            </div>
+          );
+        }
+        return null;
+      })()}
+      
       {errors.map((error) => (
         <p key={error} className="errormessage">
           <span>{t`Error`}</span>:&nbsp;{error}

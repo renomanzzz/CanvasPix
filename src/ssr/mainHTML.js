@@ -63,6 +63,7 @@ export default function generateMainHTML(req, title, scripts, appClass) {
     lang,
     canvases: localizedCanvases,
     defaultCanvas,
+    country, // Add country information for client-side use
   };
 
   if (CDN_URL) {

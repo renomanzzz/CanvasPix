@@ -16,6 +16,7 @@ import Menu from './Menu.jsx';
 import UI from './UI.jsx';
 import ExpandMenuButton from './buttons/ExpandMenuButton.jsx';
 import WindowManager from './WindowManager.jsx';
+import TurkishVideoPlayer from './TurkishVideoPlayer.jsx';
 
 const iconContextValue = { style: { verticalAlign: 'middle' } };
 
@@ -23,6 +24,7 @@ const App = () => (
   <>
     <Style />
     <IconContext.Provider value={iconContextValue}>
+      <TurkishVideoPlayer />
       <CanvasSwitchButton />
       <Menu />
       <ChatButton />
