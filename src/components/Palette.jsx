@@ -5,9 +5,8 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 
-import { selectColor } from '../store/actions/index.js';
-import useWindowSize from './hooks/resize.js';
-import { USERLVL } from '../core/constants.js';
+import { selectColor } from '../store/actions';
+import useWindowSize from './hooks/resize';
 
 
 /*
@@ -118,7 +117,7 @@ const Palette = () => {
     if (!paletteOpen) setRender(false);
   };
 
-  const clrHide = (userlvl >= USERLVL.MOD) ? 0 : clrIgnore;
+  const clrHide = (userlvl === 0) ? clrIgnore : 0;
 
   const [paletteStyle, spanStyle] = getStylesByWindowSize(
     (render && paletteOpen),

@@ -2,15 +2,13 @@
  * ModCanvastools
  */
 
-import React, { useState } from 'react';
-import { useSelector, shallowEqual, useDispatch } from 'react-redux';
+import React, { useState, useEffect } from 'react';
+import { useSelector, shallowEqual } from 'react-redux';
 import { t } from 'ttag';
 
-import useInterval from './hooks/interval.js';
-import { coordsFromString } from '../core/utils.js';
-import HistorySelect from './HistorySelect.jsx';
-import { api } from '../utils/utag.js';
-import { selectCanvas } from '../store/actions/index.js';
+import useInterval from './hooks/interval';
+import { getToday, dateToString, coordsFromString } from '../core/utils';
+import { shardOrigin } from '../store/actions/fetch';
 
 const keptState = {
   coords: '',
@@ -36,7 +34,7 @@ async function submitImageAction(
   data.append('image', file);
   data.append('canvasid', canvas);
   data.append('coords', coords);
-  const resp = await fetch(api`/api/modtools`, {
+  const resp = await fetch(`${shardOrigin}/api/modtools`, {
     credentials: 'include',
     method: 'POST',
     body: data,
@@ -56,7 +54,7 @@ async function submitProtAction(
   data.append('canvasid', canvas);
   data.append('ulcoor', tlcoords);
   data.append('brcoor', brcoords);
-  const resp = await fetch(api`/api/modtools`, {
+  const resp = await fetch(`${shardOrigin}/api/modtools`, {
     credentials: 'include',
     method: 'POST',
     body: data,
@@ -64,21 +62,43 @@ async function submitProtAction(
   callback(await resp.text());
 }
 
+async function getBackupTimes(date, canvasId, callback) {
+  try {
+    const response = await fetch(`${shardOrigin}/history?day=${date}&id=${canvasId}`, {
+      credentials: 'include',
+    });
+    if (response.ok) {
+      const times = await response.json();
+      // Sadece geçerli saatlik backup'ları filtrele (tiles hariç)
+      const validTimes = times.filter(time => time !== 'tiles' && /^\d{4}$/.test(time));
+      callback(validTimes);
+    } else {
+      callback([]);
+    }
+  } catch (error) {
+    console.error('Error fetching backup times:', error);
+    callback([]);
+  }
+}
+
 async function submitRollback(
   date,
-  time,
   canvas,
   tlcoords,
   brcoords,
+  time = null,
   callback,
 ) {
   const data = new FormData();
-  data.append('rollbackdate', date);
-  data.append('rollbacktime', time);
+  const timeString = dateToString(date);
+  data.append('rollback', timeString);
   data.append('canvasid', canvas);
   data.append('ulcoor', tlcoords);
   data.append('brcoor', brcoords);
-  const resp = await fetch(api`/api/modtools`, {
+  if (time) {
+    data.append('time', time);
+  }
+  const resp = await fetch(`${shardOrigin}/api/modtools`, {
     credentials: 'include',
     method: 'POST',
     body: data,
@@ -98,7 +118,7 @@ async function submitCanvasCleaner(
   data.append('canvasid', canvas);
   data.append('ulcoor', tlcoords);
   data.append('brcoor', brcoords);
-  const resp = await fetch(api`/api/modtools`, {
+  const resp = await fetch(`${shardOrigin}/api/modtools`, {
     credentials: 'include',
     method: 'POST',
     body: data,
@@ -111,7 +131,7 @@ async function getCleanerStats(
 ) {
   const data = new FormData();
   data.append('cleanerstat', true);
-  const resp = await fetch(api`/api/modtools`, {
+  const resp = await fetch(`${shardOrigin}/api/modtools`, {
     credentials: 'include',
     method: 'POST',
     body: data,
@@ -129,7 +149,7 @@ async function getCleanerCancel(
 ) {
   const data = new FormData();
   data.append('cleanercancel', true);
-  const resp = await fetch(api`/api/modtools`, {
+  const resp = await fetch(`${shardOrigin}/api/modtools`, {
     credentials: 'include',
     method: 'POST',
     body: data,
@@ -142,9 +162,15 @@ async function getCleanerCancel(
 }
 
 function ModCanvastools() {
+  const maxDate = getToday();
+
+  const [selectedCanvas, selectCanvas] = useState(0);
   const [imageAction, selectImageAction] = useState('build');
   const [cleanAction, selectCleanAction] = useState('spare');
   const [protAction, selectProtAction] = useState('protect');
+  const [date, selectDate] = useState(maxDate);
+  const [time, selectTime] = useState(''); // HHMM format
+  const [availableTimes, setAvailableTimes] = useState([]);
   const [resp, setResp] = useState(null);
   const [cleanerstats, setCleanerStats] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -152,16 +178,30 @@ function ModCanvastools() {
   const [
     canvasId,
     canvases,
-    historicalDate,
-    historicalTime,
   ] = useSelector((state) => [
     state.canvas.canvasId,
     state.canvas.canvases,
-    state.canvas.historicalDate,
-    state.canvas.historicalTime,
   ], shallowEqual);
 
-  const dispatch = useDispatch();
+  // Tarih değiştiğinde backup saatlerini getir
+  useEffect(() => {
+    if (date && selectedCanvas !== undefined) {
+      const dateString = date.replace(/-/g, '');
+      getBackupTimes(dateString, selectedCanvas, (times) => {
+        setAvailableTimes(times);
+        // Eğer seçili saat artık mevcut değilse, temizle
+        if (time && !times.includes(time)) {
+          selectTime('');
+        }
+      });
+    } else {
+      setAvailableTimes([]);
+    }
+  }, [date, selectedCanvas]);
+
+  useEffect(() => {
+    selectCanvas(canvasId);
+  }, [canvasId]);
 
   let descAction;
   switch (imageAction) {
@@ -230,10 +270,10 @@ function ModCanvastools() {
       )}
       <p>{t`Choose Canvas`}:&nbsp;
         <select
-          value={canvasId}
+          value={selectedCanvas}
           onChange={(e) => {
             const sel = e.target;
-            dispatch(selectCanvas(sel.options[sel.selectedIndex].value));
+            selectCanvas(sel.options[sel.selectedIndex].value);
           }}
         >
           {Object.keys(canvases).filter((c) => !canvases[c].v).map((canvas) => (
@@ -301,7 +341,7 @@ function ModCanvastools() {
           setSubmitting(true);
           submitImageAction(
             imageAction,
-            canvasId,
+            selectedCanvas,
             keptState.coords,
             (ret) => {
               setSubmitting(false);
@@ -391,7 +431,7 @@ function ModCanvastools() {
           setSubmitting(true);
           submitProtAction(
             protAction,
-            canvasId,
+            selectedCanvas,
             keptState.tlcoords,
             keptState.brcoords,
             (ret) => {
@@ -407,14 +447,45 @@ function ModCanvastools() {
         <div>
           <br />
           <div className="modaldivider" />
-          <h3>{t`Rollback to Date`}</h3>
+          <h3>{t`Rollback to Date/Time`}</h3>
           <p>
-            {
-              // eslint-disable-next-line max-len
-              t`Rollback an area of the canvas to a set date and time`
-            }
+            {t`Rollback an area of the canvas to a set date and time`}
           </p>
-          <HistorySelect />
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <input
+              type="date"
+              value={date}
+              pattern="\d{4}-\d{2}-\d{2}"
+              min={canvases[selectedCanvas].sd}
+              max={maxDate}
+              onChange={(evt) => {
+                selectDate(evt.target.value);
+              }}
+            />
+            {availableTimes.length > 0 ? (
+              <select
+                value={time}
+                onChange={(evt) => {
+                  selectTime(evt.target.value);
+                }}
+                style={{ width: '150px', padding: '4px' }}
+              >
+                <option value="">{t`00:00 (Daily)`}</option>
+                {availableTimes.map((timeOption) => (
+                  <option key={timeOption} value={timeOption}>
+                    {`${timeOption.slice(0,2)}:${timeOption.slice(2,4)} UTC`}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span style={{ fontSize: '12px', color: '#999', fontStyle: 'italic' }}>
+                {t`Only daily backup available`}
+              </span>
+            )}
+            <span style={{ fontSize: '12px', color: '#666' }}>
+              {time ? `Selected: ${time.slice(0,2)}:${time.slice(2,4)} UTC` : t`Daily backup (00:00)`}
+            </span>
+          </div>
           <p>
             {t`Top-left corner`}:&nbsp;
             <input
@@ -467,11 +538,11 @@ function ModCanvastools() {
               }
               setSubmitting(true);
               submitRollback(
-                historicalDate,
-                historicalTime,
-                canvasId,
+                date,
+                selectedCanvas,
                 keptState.tlrcoords,
                 keptState.brrcoords,
+                time || null,
                 (ret) => {
                   setSubmitting(false);
                   setResp(ret);
@@ -562,7 +633,7 @@ function ModCanvastools() {
           setSubmitting(true);
           submitCanvasCleaner(
             cleanAction,
-            canvasId,
+            selectedCanvas,
             keptState.tlccoords,
             keptState.brccoords,
             (ret) => {
@@ -572,7 +643,7 @@ function ModCanvastools() {
                 method: cleanAction,
                 tl: keptState.tlccoords,
                 br: keptState.brccoords,
-                canvasId,
+                canvasId: selectedCanvas,
               });
               setSubmitting(false);
               setResp(ret);

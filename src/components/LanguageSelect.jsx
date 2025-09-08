@@ -8,16 +8,20 @@
  */
 import React, { useState, useEffect } from 'react';
 import { t } from 'ttag';
-import { MONTH } from '../core/constants.js';
-import { cdn } from '../utils/utag.js';
+import { MONTH } from '../core/constants';
 
 function LanguageSelect() {
   const [langSel, setLangSel] = useState(window.ssv.lang);
   const [ccSel, setCCSel] = useState('xx');
 
   useEffect(() => {
-    if (window.ssv && langSel) {
-      setCCSel(window.ssv.langs[langSel]);
+    const { langs } = window.ssv;
+    for (let i = 0; i < langs.length; i += 1) {
+      const [lc, cc] = langs[i];
+      if (lc === langSel) {
+        setCCSel(cc);
+        return;
+      }
     }
   }, [langSel]);
 
@@ -36,7 +40,7 @@ function LanguageSelect() {
           }}
         >
           {
-            window.ssv && Object.keys(window.ssv.langs).map((l) => (
+            window.ssv.langs.map(([l]) => (
               <option
                 key={l}
                 value={l}
@@ -51,7 +55,7 @@ function LanguageSelect() {
         <img
           style={{ height: '1em', imageRendering: 'crisp-edges' }}
           alt=""
-          src={cdn`/cf/${ccSel}.gif`}
+          src={`/cf/${ccSel}.gif`}
         />
       </span>
       <button

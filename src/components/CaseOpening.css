@@ -1,0 +1,97 @@
+.case-opening-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.case-opening-container {
+  background: #1a1a1a;
+  border-radius: 16px;
+  padding: 24px;
+  width: 90%;
+  max-width: 500px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.case-opening-container h2 {
+  color: #fff;
+  margin-bottom: 24px;
+  font-size: 1.8em;
+}
+
+.case-opening-animation {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.spinning-items {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.spinner {
+  font-size: 48px;
+  color: #4CAF50;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.result-item {
+  text-align: center;
+  padding: 20px;
+}
+
+.gift-icon {
+  font-size: 64px;
+  color: #FFD700;
+  margin-bottom: 16px;
+}
+
+.result-item h3 {
+  color: #fff;
+  font-size: 1.4em;
+  margin-bottom: 8px;
+}
+
+.result-item p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.1em;
+}
+
+.close-button {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1.1em;
+  cursor: pointer;
+  margin-top: 24px;
+  transition: background 0.2s ease;
+}
+
+.close-button:hover {
+  background: #45a049;
+} 

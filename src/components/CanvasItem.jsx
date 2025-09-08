@@ -5,8 +5,7 @@
 import React from 'react';
 import { t } from 'ttag';
 
-import { cdn } from '../utils/utag.js';
-import { THREE_CANVAS_HEIGHT } from '../core/constants.js';
+import { THREE_CANVAS_HEIGHT } from '../core/constants';
 
 
 const CanvasItem = ({
@@ -21,7 +20,7 @@ const CanvasItem = ({
     <img
       className="cvimg"
       alt="preview"
-      src={cdn`/preview${canvasId}.png`}
+      src={`/preview${canvasId}.png`}
     />
     <div className="modalcvtext">
       <h4>{canvas.title}</h4>

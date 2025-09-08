@@ -3,9 +3,8 @@
 import React from 'react';
 import { t } from 'ttag';
 
-import { u, cdn } from '../utils/utag.js';
-import LogInForm from './LogInForm.jsx';
-import useLink from './hooks/link.js';
+import LogInForm from './LogInForm';
+import useLink from './hooks/link';
 
 const logoStyle = {
   marginRight: 5,
@@ -18,56 +17,53 @@ const LogInArea = () => {
     <div style={{ textAlign: 'center' }}>
       <p>
         {t`Login to access more features and stats.`}
-      </p>
+      </p><br />
       <h2>{t`Login with Name or Mail:`}</h2>
       <LogInForm />
-      <p>
-        <span
-          className="modallink"
-          onClick={() => link('FORGOT_PASSWORD')}
-          role="presentation"
-        >
-          {t`I forgot my Password.`}
-        </span>
-      </p>
+      <p
+        className="modallink"
+        onClick={() => link('FORGOT_PASSWORD')}
+        role="presentation"
+      >
+        {t`I forgot my Password.`}</p>
       <h2>{t`or login with:`}</h2>
-      <a href={u`/api/auth/discord`}>
+      <a href="/api/auth/discord">
         <img
           style={logoStyle}
           width={32}
-          src={cdn`/discordlogo.svg`}
+          src="/discordlogo.svg"
           alt="Discord"
         />
       </a>
-      <a href={u`/api/auth/google`}>
+      <a href="/api/auth/google">
         <img
           style={logoStyle}
           width={32}
-          src={cdn`/googlelogo.svg`}
+          src="/googlelogo.svg"
           alt="Google"
         />
       </a>
-      <a href={u`/api/auth/facebook`}>
+      <a href="/api/auth/facebook">
         <img
           style={logoStyle}
           width={32}
-          src={cdn`/facebooklogo.svg`}
+          src="/facebooklogo.svg"
           alt="Facebook"
         />
       </a>
-      <a href={u`/api/auth/vk`}>
+      <a href="/api/auth/vk">
         <img
           style={logoStyle}
           width={32}
-          src={cdn`/vklogo.svg`}
+          src="/vklogo.svg"
           alt="VK"
         />
       </a>
-      <a href={u`/api/auth/reddit`}>
+      <a href="/api/auth/reddit">
         <img
           style={logoStyle}
           width={32}
-          src={cdn`/redditlogo.svg`}
+          src="/redditlogo.svg"
           alt="Reddit"
         />
       </a>

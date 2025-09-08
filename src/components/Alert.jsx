@@ -5,11 +5,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
-import GlobalCaptcha from './GlobalCaptcha.jsx';
-import BanInfo from './BanInfo.jsx';
-import Overlay from './Overlay.jsx';
-import RefreshPrompt from './RefreshPrompt.jsx';
-import { closeAlert } from '../store/actions/index.js';
+import GlobalCaptcha from './GlobalCaptcha';
+import BanInfo from './BanInfo';
+import Overlay from './Overlay';
+import { closeAlert } from '../store/actions';
 
 const Alert = () => {
   const [render, setRender] = useState(false);
@@ -43,9 +42,6 @@ const Alert = () => {
     case 'ban':
       Content = BanInfo;
       break;
-    case 'refresh':
-      Content = RefreshPrompt;
-      break;
     default:
       // nothing
   }
@@ -78,7 +74,10 @@ const Alert = () => {
         {(Content) ? (
           <Content close={close} />
         ) : (
-          <button type="button" onClick={close}>{btn}</button>
+          <button
+            type="button"
+            onClick={close}
+          >{btn}</button>
         )}
       </div>
       )

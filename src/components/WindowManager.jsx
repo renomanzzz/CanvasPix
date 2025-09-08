@@ -5,15 +5,15 @@
 import React from 'react';
 import { useSelector, shallowEqual, useDispatch } from 'react-redux';
 
-import Window from './Window.jsx';
-import Overlay from './Overlay.jsx';
+import Window from './Window';
+import Overlay from './Overlay';
 import {
   closeFullscreenWindows,
-} from '../store/actions/windows.js';
+} from '../store/actions/windows';
 import {
   selectIfFullscreen,
   selectActiveWindowIds,
-} from '../store/selectors/windows.js';
+} from '../store/selectors/windows';
 
 const WindowManager = () => {
   const windowIds = useSelector(selectActiveWindowIds, shallowEqual);

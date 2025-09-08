@@ -5,11 +5,10 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
-import Canvastools from './ModCanvastools.jsx';
-import Admintools from './Admintools.jsx';
-import Watchtools from './ModWatchtools.jsx';
-import IIDTools from './ModIIDtools.jsx';
-import { USERLVL } from '../core/constants.js';
+import Canvastools from './ModCanvastools';
+import Admintools from './Admintools';
+import Watchtools from './ModWatchtools';
+import IIDTools from './ModIIDtools';
 
 
 const CONTENT = {
@@ -27,7 +26,7 @@ function Modtools() {
   const Content = CONTENT[selectedPart];
 
   const parts = Object.keys(CONTENT)
-    .filter((part) => part !== 'Admin' || userlvl >= USERLVL.ADMIN);
+    .filter((part) => part !== 'Admin' || [1, 3].includes(userlvl));
 
   return (
     <>

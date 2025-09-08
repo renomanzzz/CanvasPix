@@ -6,14 +6,12 @@ import React from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { t } from 'ttag';
 
-import DeleteList from './DeleteList.jsx';
-
 import {
   setBlockingDm,
   setPrivatize,
   setUserBlock,
-} from '../store/actions/thunks.js';
-import SettingsItem from './SettingsItem.jsx';
+} from '../store/actions/thunks';
+import SettingsItem from './SettingsItem';
 
 const selectBlocks = (state) => [
   state.chat.blocked,
@@ -22,7 +20,6 @@ const selectBlocks = (state) => [
   state.fetching.fetchingApi,
 ];
 
-/* eslint-disable max-len */
 const SocialSettings = ({ done }) => {
   const [
     blocked,
@@ -42,7 +39,7 @@ const SocialSettings = ({ done }) => {
             dispatch(setBlockingDm(!blockDm));
           }
         }}
-      >{t`Block all Private Messages. Enabling this will delete all your current DMs. You can still start new DMs with other users, but other users won't be able to start DMs with you.`}</SettingsItem>
+      >{t`Block all Private Messages`}</SettingsItem>
       <SettingsItem
         title={t`Private`}
         value={priv}
@@ -60,17 +57,30 @@ const SocialSettings = ({ done }) => {
       >{t`Unblock Users`}</h3>
       {
         (blocked.length) ? (
-          <DeleteList
-            list={blocked}
-            callback={(id, name) => {
-              if (!fetching) {
-                dispatch(setUserBlock(id, name, false));
-              }
-            }}
-            enabled={!fetching}
-          />
+          <span
+            className="unblocklist"
+          >
+            {
+            blocked.map((bl) => (
+              <div
+                key={bl[0]}
+                role="button"
+                tabIndex={0}
+                onClick={() => {
+                  if (!fetching) {
+                    dispatch(setUserBlock(bl[0], bl[1], false));
+                  }
+                }}
+              >
+                {`⦸ ${bl[1]}`}
+              </div>
+            ))
+          }
+          </span>
         )
-          : <p>{t`You have no users blocked`}</p>
+          : (
+            <p>{t`You have no users blocked`}</p>
+          )
       }
       <div className="modaldivider" />
       <button

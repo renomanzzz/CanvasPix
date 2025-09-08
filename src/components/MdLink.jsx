@@ -4,29 +4,20 @@
  * Links are assumed to start with protocol (http:// etc.)
  */
 import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
+import ReactDOM from 'react-dom';
 import { HiArrowsExpand, HiStop } from 'react-icons/hi';
-import { HiWindow } from 'react-icons/hi2';
-import { t } from 'ttag';
 
-import { getLinkDesc } from '../core/utils.js';
-import EMBEDS from './embeds/index.js';
-import { isPopUp } from './windows/popUpAvailable.js';
-import useLink from './hooks/link.js';
-import { cdn, u } from '../utils/utag.js';
+import { getLinkDesc } from '../core/utils';
+import EMBEDS from './embeds';
+import { isPopUp } from './windows/popUpAvailable';
 
 const titleAllowed = [
   'odysee',
   'twitter',
-  'matrix.pixelplanet.fun',
+  'matrix.Canvaspix.fun',
   'youtube',
   'youtu.be',
-  'bitchute',
-  'tiktok',
   't.me',
-  'play.afreecatv',
-  'vod.afreecatv',
-  'twitch.tv',
 ];
 
 const MdLink = ({ href, title, refEmbed }) => {
@@ -34,18 +25,16 @@ const MdLink = ({ href, title, refEmbed }) => {
 
   const desc = getLinkDesc(href);
 
-  const link = useLink();
-
   // treat pixelplanet links separately
-  if (desc === window.location.host && href.includes('/#')) {
+  if (desc === window.location.hostname && href.includes('/#')) {
     const coords = href.substring(href.indexOf('/#') + 1);
     if (isPopUp() && window.opener && !window.opener.closed) {
       return (
-        <a href={u`/${coords}`} target="main">{title || coords}</a>
+        <a href={`/${coords}`} target="main">{title || coords}</a>
       );
     }
     return (
-      <a href={u`/${coords}`}>{title || coords}</a>
+      <a href={`/${coords}`}>{title || coords}</a>
     );
   }
 
@@ -73,7 +62,7 @@ const MdLink = ({ href, title, refEmbed }) => {
         {parsedTitle}
       </a>
       {(embedAvailable) && (
-        <span className="embbtn">
+        <>
           &nbsp;
           {(embedObj[3])
             && (
@@ -83,46 +72,32 @@ const MdLink = ({ href, title, refEmbed }) => {
                 height: '1em',
                 verticalAlign: 'middle',
               }}
-              src={cdn`${embedObj[3]}`}
+              src={embedObj[3]}
               alt={`${desc}-icon`}
             />
             )}
           <span
-            onClick={(evt) => {
-              evt.stopPropagation();
-              link('PLAYER', {
-                reuse: true,
-                target: 'blank',
-                args: { uri: href },
-              });
-            }}
-            title={t`Open in PopUp`}
-          >
-            <HiWindow className="ebex" />
-          </span>
-          <span
+            style={{ cursor: 'pointer' }}
             onClick={() => setShowEmbed(!showEmbed)}
           >
             {(showEmbed)
               ? (
                 <HiStop
                   className="ebcl"
-                  title={t`Hide Embed`}
                 />
               )
               : (
                 <HiArrowsExpand
                   className="ebex"
-                  title={t`Show Embedded`}
                 />
               )}
           </span>
-          </span>
+        </>
       )}
       {showEmbed && embedAvailable && (
         (refEmbed && refEmbed.current)
-          ? createPortal(
-            <Embed url={href} maxHeight={300} />,
+          ? ReactDOM.createPortal(
+            <Embed url={href} />,
             refEmbed.current,
           ) : (
             <Embed url={href} />

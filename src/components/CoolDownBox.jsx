@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux';
 
 import {
   durationToString,
-} from '../core/utils.js';
+} from '../core/utils';
 
 
 const CoolDownBox = () => {

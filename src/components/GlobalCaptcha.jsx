@@ -5,29 +5,27 @@
  */
 
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { t } from 'ttag';
 
-import Captcha from './Captcha.jsx';
-import socketClient from '../socket/SocketClient.js';
-import { pRefresh } from '../store/actions/index.js';
-import { requestBanMe } from '../store/actions/fetch.js';
+import Captcha from './Captcha';
+import socketClient from '../socket/SocketClient';
+import {
+  requestBanMe,
+} from '../store/actions/fetch';
 
 const GlobalCaptcha = ({ close }) => {
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [legit, setLegit] = useState(false);
-  const [ready, setReady] = useState(false);
   // used to be able to force Captcha rerender on error
   const [captKey, setCaptKey] = useState(Date.now());
-  const dispatch = useDispatch();
 
   return (
     <form
       onSubmit={async (e) => {
         e.preventDefault();
         const text = e.target.captcha.value.slice(0, 6);
-        if (submitting || !text || !ready) {
+        if (submitting || !text) {
           return;
         }
         // detect suspiciously solved captcha
@@ -36,12 +34,11 @@ const GlobalCaptcha = ({ close }) => {
         }
         // ----
         const captchaid = e.target.captchaid.value;
-        const challengeSolution = e.target.challengesolution.value;
         let errorText;
         try {
           setSubmitting(true);
           const retCode = await socketClient
-            .sendCaptchaSolution(text, captchaid, challengeSolution);
+            .sendCaptchaSolution(text, captchaid);
           switch (retCode) {
             case 0:
               close();
@@ -58,12 +55,6 @@ const GlobalCaptcha = ({ close }) => {
             case 4:
               errorText = t`No captcha id given`;
               break;
-            case 6:
-              errorText = t`Your Browser looks shady`;
-              break;
-            case 5:
-              dispatch(pRefresh());
-              // eslint-disable-next-line no-fallthrough
             default:
               errorText = t`Unknown Captcha Error`;
           }
@@ -80,12 +71,7 @@ const GlobalCaptcha = ({ close }) => {
           <span>{t`Error`}</span>:&nbsp;{error}
         </p>
       )}
-      <Captcha
-        autoload
-        key={captKey}
-        onReadyStateChange={setReady}
-        setLegit={setLegit}
-      />
+      <Captcha autoload key={captKey} setLegit={setLegit} />
       <p>
         <button
           type="button"
@@ -97,7 +83,7 @@ const GlobalCaptcha = ({ close }) => {
         <button
           type="submit"
         >
-          {(submitting || !ready) ? '...' : t`Send`}
+          {(submitting) ? '...' : t`Send`}
         </button>
       </p>
     </form>

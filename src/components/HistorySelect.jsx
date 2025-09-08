@@ -2,20 +2,29 @@
  * LogIn Form
  */
 import React, {
-  useState, useCallback, useRef, useEffect,
+  useState, useCallback, useRef,
 } from 'react';
 import { useSelector, shallowEqual, useDispatch } from 'react-redux';
 import { t } from 'ttag';
 
-import {
-  dateToString, getToday, stringToDate, stringToTime,
-} from '../core/utils.js';
-import { selectHistoricalTime } from '../store/actions/index.js';
-import { requestHistoricalTimes } from '../store/actions/fetch.js';
+import { dateToString, getToday } from '../core/utils';
+import { selectHistoricalTime } from '../store/actions';
+import { requestHistoricalTimes } from '../store/actions/fetch';
 
-const TIME_CACHE = new Map();
 
-const HistorySelect = ({ id }) => {
+function stringToDate(dateString) {
+  if (!dateString) return '';
+  // YYYYMMDD
+  // eslint-disable-next-line max-len
+  return `${dateString.substring(0, 4)}-${dateString.substring(4, 6)}-${dateString.substring(6)}`;
+}
+
+function stringToTime(timeString) {
+  if (!timeString) return '';
+  return `${timeString.substring(0, 2)}:${timeString.substring(2)}`;
+}
+
+const HistorySelect = () => {
   const dateSelect = useRef(null);
 
   const [submitting, setSubmitting] = useState(false);
@@ -44,71 +53,57 @@ const HistorySelect = ({ id }) => {
     dispatch(selectHistoricalTime(dateString, timeString));
   }, [dispatch]);
 
-  const handleDateChange = useCallback(async (date) => {
-    const key = `${date}/${canvasId}`;
-    const cache = TIME_CACHE.get(key);
-    if (cache && cache[1] > Date.now() - 30 * 60 * 1000) {
-      return cache[0];
+  const handleDateChange = useCallback(async (evt) => {
+    if (submitting) {
+      return;
     }
     setSubmitting(true);
+    const date = evt.target.value;
     const newTimes = await requestHistoricalTimes(date, canvasId);
-    TIME_CACHE.set(key, [newTimes, Date.now()]);
+    if (newTimes && newTimes.length) {
+      setTimes(newTimes);
+      setTime(date, newTimes[0]);
+    }
     setSubmitting(false);
-    return newTimes;
-  }, [canvasId]);
+  }, [submitting, canvasId, setTime]);
 
   const changeTime = useCallback(async (diff) => {
-    if (!times.length || !dateSelect.current?.value) {
+    if (!times.length
+      || !dateSelect || !dateSelect.current || !dateSelect.current.value) {
       return;
     }
 
-    const newPos = times.indexOf(stringToTime(historicalTime)) + diff;
-    let date = dateSelect.current.value;
+    let newTimes = times;
+    let newPos = times.indexOf(stringToTime(historicalTime)) + diff;
+    let newSelectedDate = dateSelect.current.value;
     if (newPos >= times.length || newPos < 0) {
+      setSubmitting(true);
       if (newPos < 0) {
         dateSelect.current.stepDown(1);
       } else {
         dateSelect.current.stepUp(1);
       }
-      date = dateSelect.current.value;
-      const newTimes = await handleDateChange(date);
-      let newTime;
-      if (newPos < 0 && newTimes.length > 0) {
-        newTime = newTimes[newTimes.length - 1];
-      } else {
-        newTime = newTimes[0] || '00:00';
+      newSelectedDate = dateSelect.current.value;
+      newTimes = await requestHistoricalTimes(
+        newSelectedDate,
+        canvasId,
+      );
+      setSubmitting(false);
+      if (!newTimes || !newTimes.length) {
+        return;
       }
-      setTimes(newTimes);
-      setTime(date, newTime);
-      return;
+      newPos = (newPos < 0) ? (newTimes.length - 1) : 0;
     }
-    setTime(date, times[newPos]);
-  }, [historicalTime, times, handleDateChange, setTime]);
 
-  // account for store getting changed somewhere else
-  useEffect(() => {
-    (async () => {
-      const date = stringToDate(historicalDate);
-      const key = `${date}/${canvasId}`;
-      const cache = TIME_CACHE.get(key);
-      if (!cache || times !== cache[0]) {
-        setTimes(await handleDateChange(date));
-      }
-      if (cache && cache[0].length
-      && !cache[0].includes(stringToTime(historicalTime))
-      ) {
-        setTime(date, cache[0][0]);
-      }
-    })();
-  }, [
-    historicalDate, historicalTime, canvasId, handleDateChange, setTime, times,
-  ]);
+    setTimes(newTimes);
+    setTime(newSelectedDate, newTimes[newPos]);
+  }, [historicalTime, times, canvasId, setTime]);
 
   const selectedDate = stringToDate(historicalDate);
   const selectedTime = stringToTime(historicalTime);
 
   return (
-    <div className="historyselect" id={id}>
+    <div id="historyselect">
       <input
         type="date"
         pattern="\d{4}-\d{2}-\d{2}"
@@ -117,12 +112,7 @@ const HistorySelect = ({ id }) => {
         min={canvasStartDate}
         max={canvasEndDate || max}
         ref={dateSelect}
-        onChange={async (evt) => {
-          const date = evt.target.value;
-          const newTimes = await handleDateChange(date);
-          setTimes(newTimes);
-          setTime(date, newTimes[0] || '00:00');
-        }}
+        onChange={handleDateChange}
       />
       <div key="timeselcon">
         { (!!times.length && historicalTime && !submitting)

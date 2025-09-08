@@ -9,7 +9,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { BiChalkboard } from 'react-icons/bi';
 import { t } from 'ttag';
 
-import { openWindowPopUp } from './hooks/link.js';
+import { openWindowPopUp } from './hooks/link';
 import {
   moveWindow,
   removeWindow,
@@ -21,22 +21,17 @@ import {
   setWindowTitle,
   setWindowArgs,
   changeWindowType,
-} from '../store/actions/windows.js';
+} from '../store/actions/windows';
 import {
   makeSelectWindowById,
   makeSelectWindowPosById,
   makeSelectWindowArgs,
   selectShowWindows,
-} from '../store/selectors/windows.js';
-import useDrag from './hooks/drag.js';
-import WindowContext from './context/window.js';
-import COMPONENTS from './windows/index.js';
-import popUpTypes from './windows/popUpAvailable.js';
-
-/*
- * disabled for id and dispatch
- */
-/* eslint-disable react-hooks/exhaustive-deps */
+} from '../store/selectors/windows';
+import useDrag from './hooks/drag';
+import WindowContext from './context/window';
+import COMPONENTS from './windows';
+import popUpTypes from './windows/popUpAvailable';
 
 const Window = ({ id }) => {
   const [render, setRender] = useState(false);
@@ -91,14 +86,12 @@ const Window = ({ id }) => {
     width, height,
   } = position;
 
-  const shown = !render && hidden;
-
   useDrag(
     titleBarRef,
     focus,
     useCallback((xDiff, yDiff) => dispatch(
       moveWindow(id, xDiff, yDiff),
-    ), [fullscreen, shown]),
+    ), [fullscreen, !render && hidden]),
   );
 
   useDrag(
@@ -106,7 +99,7 @@ const Window = ({ id }) => {
     focus,
     useCallback((xDiff, yDiff) => dispatch(
       resizeWindow(id, xDiff, yDiff),
-    ), [fullscreen, shown]),
+    ), [fullscreen, !render && hidden]),
   );
 
   const onTransitionEnd = useCallback(() => {

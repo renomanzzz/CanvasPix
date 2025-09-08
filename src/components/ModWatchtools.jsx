@@ -3,14 +3,13 @@
  * Tools to check who placed what where
  */
 
-import React, { useState } from 'react';
-import { useSelector, shallowEqual, useDispatch } from 'react-redux';
+import React, { useState, useEffect } from 'react';
+import { useSelector, shallowEqual } from 'react-redux';
 import { t } from 'ttag';
 
-import copyTextToClipboard from '../utils/clipboard.js';
-import { parseInterval, coordsFromString } from '../core/utils.js';
-import { api, cdn } from '../utils/utag.js';
-import { selectCanvas } from '../store/actions/index.js';
+import copyTextToClipboard from '../utils/clipboard';
+import { parseInterval, coordsFromString } from '../core/utils';
+import { shardOrigin } from '../store/actions/fetch';
 
 const keepState = {
   tlcoords: '',
@@ -58,12 +57,18 @@ async function submitWatchAction(
   data.append('time', time);
   data.append('iid', iid);
   try {
-    const resp = await fetch(api`/api/modtools`, {
+    const resp = await fetch(`${shardOrigin}/api/modtools`, {
       credentials: 'include',
       method: 'POST',
       body: data,
     });
-    callback(await resp.json());
+    let ret;
+    try {
+      ret = await resp.json();
+    } catch {
+      throw new Error(await resp.text());
+    }
+    callback(await ret);
   } catch (err) {
     callback({
       info: `Error: ${err.message}`,
@@ -72,6 +77,7 @@ async function submitWatchAction(
 }
 
 function ModWatchtools() {
+  const [selectedCanvas, selectCanvas] = useState(0);
   const [sortAsc, setSortAsc] = useState(true);
   const [sortBy, setSortBy] = useState(0);
   const [table, setTable] = useState({});
@@ -86,7 +92,9 @@ function ModWatchtools() {
     state.canvas.canvases,
   ], shallowEqual);
 
-  const dispatch = useDispatch();
+  useEffect(() => {
+    selectCanvas(canvasId);
+  }, [canvasId]);
 
   const {
     columns, types, rows, ts,
@@ -116,10 +124,10 @@ function ModWatchtools() {
         <p>{t`Check who placed in an area`}</p>
         <p>{t`Canvas`}:&nbsp;
           <select
-            value={canvasId}
+            value={selectedCanvas}
             onChange={(e) => {
               const sel = e.target;
-              dispatch(selectCanvas(sel.options[sel.selectedIndex].value));
+              selectCanvas(sel.options[sel.selectedIndex].value);
             }}
           >
             {Object.keys(canvases)
@@ -217,7 +225,7 @@ function ModWatchtools() {
             setSubmitting(true);
             submitWatchAction(
               'all',
-              canvasId,
+              selectedCanvas,
               keepState.tlcoords,
               keepState.brcoords,
               keepState.interval,
@@ -249,7 +257,7 @@ function ModWatchtools() {
             setSubmitting(true);
             submitWatchAction(
               'summary',
-              canvasId,
+              selectedCanvas,
               keepState.tlcoords,
               keepState.brcoords,
               keepState.interval,
@@ -326,7 +334,7 @@ function ModWatchtools() {
                         }
                         case 'clr': {
                           const cid = (cidColumn > 0)
-                            ? row[cidColumn] : canvasId;
+                            ? row[cidColumn] : selectedCanvas;
                           const rgb = canvases[cid]
                           && canvases[cid].colors
                           && canvases[cid].colors[val];
@@ -343,7 +351,7 @@ function ModWatchtools() {
                         }
                         case 'coord': {
                           const cid = (cidColumn > 0)
-                            ? row[cidColumn] : canvasId;
+                            ? row[cidColumn] : selectedCanvas;
                           const ident = canvases[cid] && canvases[cid].ident;
                           const coords = `./#${ident},${val},47`;
                           return (
@@ -361,7 +369,7 @@ function ModWatchtools() {
                                 imageRendering: 'crisp-edges',
                               }}
                               alt={val}
-                              src={cdn`/cf/${flag}.gif`}
+                              src={`/cf/${flag}.gif`}
                             /></td>
                           );
                         }
@@ -393,8 +401,10 @@ function ModWatchtools() {
                               <span
                                 role="button"
                                 tabIndex={-1}
-                                className="modallink"
-                                style={{ whiteSpace: 'initial' }}
+                                style={{
+                                  cursor: 'pointer',
+                                  whiteSpace: 'initial',
+                                }}
                                 title={t`Copy to Clipboard`}
                                 onClick={() => copyTextToClipboard(val)}
                               >{val}</span>
@@ -407,20 +417,9 @@ function ModWatchtools() {
                             return (<td key={type}><span>{val}</span></td>);
                           }
                           return (
-                            <td key={type}>
-                              <span
-                                role="button"
-                                tabIndex={-1}
-                                className="modallink"
-                                title={t`Copy UserId to Clipboard`}
-                                onClick={() => copyTextToClipboard(
-                                  val.slice(seperator + 1),
-                                )}
-                              >
-                                {
-                                  // eslint-disable-next-line max-len
-                                  `${val.slice(0, seperator)} [${val.slice(seperator + 1)}]`
-                                }
+                            <td key={type} title={val.slice(seperator + 1)}>
+                              <span>
+                                {val.slice(0, seperator)}
                               </span>
                             </td>
                           );

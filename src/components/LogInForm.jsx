@@ -7,9 +7,9 @@ import { t } from 'ttag';
 
 import {
   validateEMail, validateName, validatePassword,
-} from '../utils/validation.js';
-import { requestLogin } from '../store/actions/fetch.js';
-import { loginUser } from '../store/actions/index.js';
+} from '../utils/validation';
+import { requestLogin } from '../store/actions/fetch';
+import { loginUser } from '../store/actions';
 
 
 function validate(nameoremail, password) {
@@ -31,6 +31,8 @@ const inputStyles = {
 };
 
 const LogInForm = () => {
+  const [nameoremail, setNameOrEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState([]);
 
@@ -38,12 +40,10 @@ const LogInForm = () => {
 
   const handleSubmit = async (evt) => {
     evt.preventDefault();
+
     if (submitting) {
       return;
     }
-    const nameoremail = evt.target.nameoremail.value;
-    const password = evt.target.password.value;
-    const durationsel = evt.target.durationsel.value;
 
     const valErrors = validate(nameoremail, password);
     if (valErrors.length > 0) {
@@ -53,7 +53,8 @@ const LogInForm = () => {
 
     setSubmitting(true);
     const { errors: respErrors, me } = await requestLogin(
-      nameoremail, password, durationsel,
+      nameoremail,
+      password,
     );
     setSubmitting(false);
     if (respErrors) {
@@ -66,34 +67,22 @@ const LogInForm = () => {
   return (
     <form onSubmit={handleSubmit}>
       {errors.map((error) => (
-        <p key={error} className="errormessage">
-          <span>{t`Error`}</span>:&nbsp;{error}
-        </p>
+        <p key={error}><span>{t`Error`}</span>:&nbsp;{error}</p>
       ))}
       <input
+        value={nameoremail}
         style={inputStyles}
-        name="nameoremail"
-        autoComplete="email"
+        onChange={(evt) => setNameOrEmail(evt.target.value)}
         type="text"
         placeholder={t`Name or Email`}
       /><br />
       <input
+        value={password}
         style={inputStyles}
-        name="password"
-        autoComplete="current-password"
+        onChange={(evt) => setPassword(evt.target.value)}
         type="password"
         placeholder={t`Password`}
       />
-      <p>
-        {t`Stay logged in: `}
-        <select defaultValue={24 * 31} name="durationsel">
-          <option value={0}>{t`Until the browser closes`}</option>
-          <option value={24 * 7}>{t`For one week`}</option>
-          <option value={24 * 31}>{t`For one month`}</option>
-          <option value={24 * 265}>{t`For one year`}</option>
-          <option value="forever">{t`Forever`}</option>
-        </select>
-      </p>
       <p>
         <button type="submit">
           {(submitting) ? '...' : t`LogIn`}

@@ -3,18 +3,15 @@
  */
 
 import React, { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { t } from 'ttag';
 
-import { validatePassword } from '../utils/validation.js';
-import { requestDeleteAccount } from '../store/actions/fetch.js';
-import { logoutUser } from '../store/actions/index.js';
+import { validatePassword } from '../utils/validation';
+import { requestDeleteAccount } from '../store/actions/fetch';
+import { logoutUser } from '../store/actions';
 
-function validate(havePassword, password) {
+function validate(password) {
   const errors = [];
-  if (!havePassword) {
-    return errors;
-  }
 
   const passworderror = validatePassword(password);
   if (passworderror) errors.push(passworderror);
@@ -27,7 +24,6 @@ const DeleteAccount = ({ done }) => {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState([]);
 
-  const havePassword = useSelector((state) => state.user.havePassword);
   const dispatch = useDispatch();
 
   const handleSubmit = async (evt) => {
@@ -36,7 +32,7 @@ const DeleteAccount = ({ done }) => {
       return;
     }
 
-    const valErrors = validate(havePassword, password);
+    const valErrors = validate(password);
     if (valErrors.length > 0) {
       setErrors(valErrors);
       return;
@@ -59,18 +55,13 @@ const DeleteAccount = ({ done }) => {
           <p key={error} className="errormessage"><span>{t`Error`}</span>
             :&nbsp;{error}</p>
         ))}
-        {(havePassword)
-        && (
-          <React.Fragment key="pass">
-            <input
-              value={password}
-              onChange={(evt) => setPassword(evt.target.value)}
-              type="password"
-              placeholder={t`Password`}
-            />
-            <br />
-          </React.Fragment>
-        )}
+        <input
+          value={password}
+          onChange={(evt) => setPassword(evt.target.value)}
+          type="password"
+          placeholder={t`Password`}
+        />
+        <br />
         <button type="submit">
           {(submitting) ? '...' : t`Yes, Delete My Account!`}
         </button>

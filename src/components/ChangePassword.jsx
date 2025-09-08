@@ -6,14 +6,14 @@ import React, { useState } from 'react';
 import { t } from 'ttag';
 import { useSelector, useDispatch } from 'react-redux';
 
-import { setHavePassword } from '../store/actions/index.js';
-import { validatePassword } from '../utils/validation.js';
-import { requestPasswordChange } from '../store/actions/fetch.js';
+import { setMailreg } from '../store/actions';
+import { validatePassword } from '../utils/validation';
+import { requestPasswordChange } from '../store/actions/fetch';
 
-function validate(havePassword, password, newPassword, confirmPassword) {
+function validate(mailreg, password, newPassword, confirmPassword) {
   const errors = [];
 
-  if (havePassword) {
+  if (mailreg) {
     const oldpasserror = validatePassword(password);
     if (oldpasserror) errors.push(oldpasserror);
   }
@@ -35,7 +35,7 @@ const ChangePassword = ({ done }) => {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState([]);
 
-  const havePassword = useSelector((state) => state.user.havePassword);
+  const mailreg = useSelector((state) => state.user.mailreg);
   const dispatch = useDispatch();
 
   if (success) {
@@ -54,7 +54,7 @@ const ChangePassword = ({ done }) => {
           e.preventDefault();
           if (submitting) return;
           const valerrors = validate(
-            havePassword,
+            mailreg,
             password,
             newPassword,
             confirmPassword,
@@ -71,7 +71,7 @@ const ChangePassword = ({ done }) => {
             setSubmitting(false);
             return;
           }
-          dispatch(setHavePassword(true));
+          dispatch(setMailreg(true));
           setSuccess(true);
         }}
       >
@@ -79,37 +79,28 @@ const ChangePassword = ({ done }) => {
           <p key={error} className="errormessage"><span>{t`Error`}</span>
             :&nbsp;{error}</p>
         ))}
-        {(havePassword)
-          ? (
-            <React.Fragment key="oldpass">
-              <input
-                value={password}
-                onChange={(evt) => setPassword(evt.target.value)}
-                type="password"
-                placeholder={t`Old Password`}
-              />
-              <br />
-            </React.Fragment>
-          ) : (
-            <p key="passinfo">{
-            /* eslint-disable-next-line max-len */
-            t`Setting a password allows you to login by username or email, rather than only relying on 3rd party login.`
-          }</p>
-          )}
+        {(mailreg)
+        && (
+        <input
+          value={password}
+          onChange={(evt) => setPassword(evt.target.value)}
+          type="password"
+          placeholder={t`Old Password`}
+        />
+        )}
+        <br />
         <input
           value={newPassword}
           onChange={(evt) => setNewPassword(evt.target.value)}
           type="password"
-          placeholder={(havePassword) ? t`New Password` : t`Password`}
+          placeholder={t`New Password`}
         />
         <br />
         <input
           value={confirmPassword}
           onChange={(evt) => setConfirmPassword(evt.target.value)}
           type="password"
-          placeholder={
-            (havePassword) ? t`Confirm New Password` : t`Confirm Password`
-          }
+          placeholder={t`Confirm New Password`}
         />
         <br />
         <button

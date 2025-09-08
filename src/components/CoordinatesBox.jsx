@@ -6,8 +6,8 @@ import React from 'react';
 import { useSelector, shallowEqual, useDispatch } from 'react-redux';
 import { t } from 'ttag';
 
-import copy from '../utils/clipboard.js';
-import { notify } from '../store/actions/thunks.js';
+import copy from '../utils/clipboard';
+import { notify } from '../store/actions/thunks';
 
 
 function renderCoordinates(cell) {
@@ -28,7 +28,7 @@ const CoordinatesBox = () => {
     coords = hover;
   } else {
     const [x, y, z] = view;
-    coords = (is3D ? [x, y, z] : [x, y]).map(Math.floor);
+    coords = (is3D ? [x, y, z] : [x, y]).map(Math.round);
   }
 
   return (

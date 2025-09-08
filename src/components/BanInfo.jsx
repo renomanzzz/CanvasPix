@@ -2,73 +2,64 @@
  * get information about ban
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { t } from 'ttag';
 
-import useInterval from './hooks/interval.js';
-import useLink from './hooks/link.js';
-import ClipboardCopyField from './ClipboardCopyField.jsx';
+import useInterval from './hooks/interval';
+import useLink from './hooks/link';
 import {
   largeDurationToString,
-} from '../core/utils.js';
-import { requestBanInfo } from '../store/actions/fetch.js';
+} from '../core/utils';
+import { requestBanInfo } from '../store/actions/fetch';
 
 
 const BanInfo = ({ close }) => {
   const [errors, setErrors] = useState([]);
-  const [bans, setBans] = useState([]);
+  const [reason, setReason] = useState(null);
+  const [mod, setMod] = useState(null);
+  const [expireTs, setExpireTs] = useState(0);
+  const [expire, setExpire] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   const link = useLink();
 
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = async () => {
     if (submitting) {
       return;
     }
     setSubmitting(true);
     setErrors([]);
-    const infos = await requestBanInfo();
+    const info = await requestBanInfo();
     setSubmitting(false);
-    if (infos.errors) {
-      setErrors(infos.errors);
+    if (info.errors) {
+      setErrors(info.errors);
       return;
     }
-    let i = infos.length;
-    while (i > 0) {
-      i -= 1;
-      const ban = infos[i];
-      ban.expires = ban.sleft && new Date(
-        Date.now() + ban.sleft * 1000,
-      ).toLocaleString();
+    const {
+      sleft,
+      mod: newMod,
+      reason: newReason,
+    } = info;
+    if (sleft) {
+      const tsDate = new Date(Date.now() + sleft * 1000);
+      setExpireTs(sleft);
+      setExpire(tsDate.toLocaleString());
     }
-    setBans(infos);
-  }, [submitting]);
+    setMod(newMod);
+    setReason(newReason);
+  };
 
-  const countDown = useCallback(() => {
-    if (bans.length) {
-      const newBans = [];
-      for (let i = 0; i < bans.length; i += 1) {
-        const ban = bans[i];
-        if (ban.sleft) {
-          const sleft = ban.sleft - 1;
-          if (sleft <= 0) {
-            continue;
-          }
-          ban.sleft = sleft;
-        }
-        newBans.push(ban);
-      }
-      if (!newBans.length) {
-        close();
-      } else {
-        setBans(newBans);
+  useInterval(() => {
+    if (expireTs > 0) {
+      setExpireTs(expireTs - 1);
+      if (expireTs === 1) {
+        handleSubmit();
       }
     }
-  }, [bans, close]);
-
-  useInterval(countDown, 1000);
+  }, 1000);
 
   /* eslint-disable max-len */
+
   return (
     <div style={{ userSelect: 'text' }}>
       <p>
@@ -82,49 +73,48 @@ const BanInfo = ({ close }) => {
             close();
           }}
         >{t`Help`}</span>
-        {t` on how to appeal. And don't forget to include the BID you can get below.`}
+        {t` on how to appeal.`}
       </p>
       {errors.map((error) => (
         <p key={error} className="errormessage">
           <span>{t`Error`}</span>:&nbsp;{error}
         </p>
       ))}
-      {bans.map(({ reason, mod, sleft, expires, uuid }, index) => (
-        <div className="baninfo" key={uuid}>
+      {(reason) && (
+        <React.Fragment key="rea">
+          <h3>{t`Reason`}:</h3>
+          <p>{reason}</p>
+        </React.Fragment>
+      )}
+      {(mod) && (
+        <React.Fragment key="mod">
+          <h3>{t`By Mod`}:</h3>
+          <p>{mod}</p>
+        </React.Fragment>
+      )}
+      {(expireTs > 0) && (
+        <React.Fragment key="exp">
+          <h3>{t`Duration`}:</h3>
           <p>
-            <span className="stattext">{t`Reason`}: </span>
-            {reason}
+            {t`Your ban expires at `}
+            <span style={{ fontWeight: 'bold' }}>{expire}</span>
+            {t` which is in `}
+            <span
+              style={{ fontWeight: 'bold' }}
+            >
+              {largeDurationToString(expireTs)}
+            </span>
           </p>
-          {(mod) && (
-            <p key="mod">
-              <span className="stattext">{t`By Mod`}: </span>
-              {mod}
-            </p>
-          )}
-          {(sleft > 0) && (
-            <p key="exp">
-              <span className="stattext">{t`Duration`}: </span>
-              {t`Your ban expires at `}
-              <span style={{ fontWeight: 'bold' }}>{expires}</span>
-              {t` which is in `}
-              <span
-                style={{ fontWeight: 'bold' }}
-              >
-                {largeDurationToString(sleft)}
-              </span>
-            </p>
-          )}
-          <p>
-            <span className="stattext">{t`BID`}: </span>
-            <ClipboardCopyField text={uuid} maxWidth="18em" />
-          </p>
-          {(index !== bans.length - 1) && (
-            <div className="modaldivider" />
-          )}
-        </div>
-      ))}
+        </React.Fragment>
+      )}
+      {(expireTs < 0) && (
+        <React.Fragment key="nb">
+          <h3>{t`Unbanned`}:</h3>
+          <p>{t`Now that you have seen this message, you are no longer banned.`}</p>
+        </React.Fragment>
+      )}
       <p>
-        {(bans.length === 0) && (
+        {(!reason) && (
           <React.Fragment key="btnr">
             <button
               type="button"
@@ -139,7 +129,12 @@ const BanInfo = ({ close }) => {
             &nbsp;
           </React.Fragment>
         )}
-        <button type="submit" onClick={close}>{t`OK`}</button>
+        <button
+          type="submit"
+          onClick={close}
+        >
+          {t`OK`}
+        </button>
       </p>
     </div>
   );
