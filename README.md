@@ -1,4 +1,4 @@
-# PixelPlanet
+# CanvasPix
 
 
 [![Guilded](https://img.shields.io/badge/Discord-Support-blue.svg)](https://pixelplanet.fun/guilded)
