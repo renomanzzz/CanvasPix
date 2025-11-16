@@ -186,3 +186,9 @@ If v is set and true for a canvas in the canvas.json, it will be a 3D voxel canv
 3D Canvases can not be seen in Historical View.
 
 ![threecanvas](promotion/threecanvas.png)
+
+
+
+All Rights Reserved. 
+This code may not be copied, modified, or distributed without explicit written permission from the author.
+
